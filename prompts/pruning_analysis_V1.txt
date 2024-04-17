@@ -1,0 +1,61 @@
+
+**Objective:** Provide full flexed pruning analysis analysing the `pruningAndPartitioningReport`, `executionStats`, and `query_text` to identify potential pruning opportunities and suggest optimization strategies for improving query performance, focusing on unpruned and focusable tables, and considering partitioning details and cost percentages from the `pruningAndPartitioningReport`.
+
+**Context:**
+
+* **Pruning and Partitioning Report:** Provides insights into table pruning and partitioning strategies used in the query, including cost percentages for each table at specific operator IDs.
+    * `pruningAndPartitioningReport`: Contains information about pruned tables, unpruned tables, partitioning details, and Focusable tables(tables involved in query with high cost percents) along with cost percentages for each table at specific operator IDs
+            \n{pruningAndPartitioningReport}\n
+* **Execution Stats:** Contains detailed information about the query execution plan, including operator metrics and statistics.
+    * `executionStats`: \n{data} \n
+* **Query Text:** Associated SQL query in text.
+        \n{query_text}\n  
+* **Documentation:** Reference documentation for understanding the JSON data and performance metrics.
+      documentation: \n{document}\n
+
+**Analysis:**
+
+* **Identify Unpruned and Focusable Tables:**
+    * Examine the `pruningAndPartitioningReport` to identify tables that are not pruned and have a relatively high cost percentage at their corresponding operator IDs.
+    * Analyze the `query_text` to understand the filter conditions applied to these tables.
+    * For each unpruned and focusable table, consider the following:
+        * **Cost impact:** Analyze the `executionStats` and the `pruningAndPartitioningReport` to determine the cost percentage of the table scan operator associated with the unpruned table at its corresponding operator ID.
+        * **Filter analysis:** Identify frequently used filter conditions on the unpruned table from the `query_text`.
+        * **Partitioning analysis:**
+            * Review the partitioning details for the unpruned table from the `pruningAndPartitioningReport`.
+            * Identify potential improvements based on the identified filters, the existing partitioning scheme, and the cost percentage at the corresponding operator ID.
+            * Consider whether additional partitioning or different partitioning strategies could further reduce the amount of data scanned.
+            * Provide specific recommendations for adding indexes or partitioning based on the identified filters on these tables from query text as they are having high cost percents.
+* **Analyze Pruned Tables:**
+    * Examine the `pruningAndPartitioningReport` to identify tables that are pruned and have a relatively high cost percentage at their corresponding operator IDs.
+    * Analyze the `executionStats` to determine the cost percentage of the table scan operator associated with the pruned table at its corresponding operator ID.
+    * If the cost percentage is high, consider whether the existing pruning strategy is effective and if further optimization is possible.
+    * Analyze the `query_text` to identify potential improvements to the existing pruning strategy.
+    * Always mention if any values of number of files/partitions pruned or skipped_row_groups in the respose.
+    * Review the partitioning details for the pruned table from the `pruningAndPartitioningReport` and consider whether the existing partitioning scheme is aligned with the query filters and could be further optimized.
+
+**Output:**
+
+* **Pruning Potential for Unpruned and Focusable Tables:**
+    * For each unpruned and focusable table, provide specific recommendations for adding indexes or partitioning based on the identified filters, cost impact, partitioning details, and cost percentages from the `pruningAndPartitioningReport`.
+    * Prioritize recommendations based on the cost percentage of the table scan operator at its corresponding operator ID, the frequency of filter conditions, and the potential for improvement based on the existing partitioning scheme.
+    * Suggest partitioning strategies based on frequently used filter columns, the existing partitioning scheme, and the `pruningAndPartitioningReport` insights.
+* **Pruning Effectiveness for Pruned Tables:**
+    * For pruned tables with high cost percentages at their corresponding operator IDs, analyze the existing pruning strategy and suggest improvements if necessary.
+    * Consider whether additional filters or partitioning strategies could further reduce the amount of data scanned.
+    * Analyze the `query_text` to identify potential improvements to the existing pruning strategy.
+    * Review the partitioning details for the pruned table from the `pruningAndPartitioningReport` and consider whether the existing partitioning scheme is aligned with the query filters and could be further optimized.
+
+**Additional Notes:**
+
+* Focus on providing actionable insights and specific recommendations for improving pruning effectiveness.
+* Consider the cost impact of different optimization strategies and prioritize recommendations based on their potential benefit.
+* Use clear and concise language, avoiding unnecessary technical jargon.
+* Provide references to relevant documentation and resources for further information.
+
+**Example Output:**
+
+* **Table `customer_address` is not pruned and has a cost percentage of 5.43% at operator ID 13.** Analyze the `query_text` and identify frequently used filter conditions on columns like `address_id` and `city`. Consider adding indexes on these columns to improve pruning effectiveness.
+* **Table `customer` is not pruned and has a cost percentage of 16.54% at operator ID 15.** Analyze the `query_text` and identify frequently used filter conditions on columns like `customer_id` and `state`. Consider partitioning the table on these columns to further reduce the amount of data scanned, taking into account the existing partitioning scheme from the `pruningAndPartitioningReport`.
+* **Table `web_sales` is pruned, but the cost percentage is still high at 68.5% at operator ID 28.** Analyze the `query_text` and identify potential improvements to the existing pruning strategy. Consider adding indexes on columns that are frequently used in filter conditions but are not currently indexed. Review the partitioning details for the pruned table from the `pruningAndPartitioningReport` and consider whether the existing partitioning scheme is aligned with the query filters and could be further optimized.
+

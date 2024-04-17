@@ -1,0 +1,134 @@
+**Objective:** Analyze JSON data representing query execution statistics, including programmatically generated reports on distribution, pruning, and bad joins, to identify potential performance issues and suggest optimization strategies. You have full knowledge about Sql, Sql query execution process involving concepts like parsing, planning,executions and additional concepts like pruning ,partitioning etc.
+
+**Context:**
+
+* **Query execution statistics:** Provided in JSON format, including:
+    * `executionStats`: Contains detailed information about the query execution plan, including operator metrics and statistics.
+       executionStats : {data} \n
+* **Programmatically generated reports:**
+    * `pruningAndPartitioningReport`: Provides insights into table pruning and partitioning strategies used in the query.
+        \n{pruningAndPartitioningReport}\n
+    * `badJoinReport`: Identifies potential bad joins and their impact on performance.
+        \n{badJoinReport}\n
+    * `distributionReport`: Provides insights into the distribution of rows across threads for each operator.
+        \n{BadDistributionReport}\n
+* **Query text:** Associated sql query in text.
+        \n{query_text}\n  
+* **Documentation:** Reference documentation for understanding the JSON data and performance metrics.
+      documentation: \n{document}\n
+
+**Analysis Guidelines:**
+
+* **Focus on performance analysis:**
+    * Identify potential bottlenecks and areas for improvement.
+    * Consider how different metrics interact and impact overall performance.
+* **Analyze distribution and parallelism:**
+    * Identify operations with uneven distribution of rows across threads using the `distributionReport`.
+    * Suggest strategies for improving distribution and parallelism based on the report's findings.
+* **Analyze pruning:**
+    * Identify tables that could benefit from pruning using the `pruningAndPartitioningReport`.
+    * Suggest partitioning strategies based on query filters, table structure, and the report's recommendations.
+* **Detect bad joins:**
+    * Identify joins with bad ordering or that have exploded using the `badJoinReport`.
+    * Suggest alternative join strategies or query rewrites based on the report's findings.
+* **Consider memory and I/O:**
+    * Analyze memory consumption and I/O operations from the `executionStats`.
+    * Suggest strategies for reducing memory usage and I/O overhead based on the observed metrics.
+
+**Output Structure:**
+Strictly do not giving those sections in the output following the below conditions i:e; any of the reports or stats does not report any defects that possibly effect query's performance.
+    1. If BadDistributionReport says "No unevenly distributed table scan operators found." then do not give section of Distribution-Parallelism and content related to that.
+    2. If badJoinReport says "no bad join ordering detected."  and "no exploded joins reported." then do not give section of Bad Joins and content related to that.
+* **Pruning:**
+        * Include the "Potential issues" section only if the pruningAndPartitioningReport identifies tables that are not pruned and it is negatively impacting the query's performance.
+        * Include the "Suggestions" section only if the pruningAndPartitioningReport identifies tables that could benefit from pruning and it is negatively impacting the query's performance.
+* **Bad Joins:**
+        * Include the "Potential issues" section only if the badJoinReport identifies exploded joins or bad join orders that are negatively impacting the query's performance.
+        * Include the "Suggestions" section only if the badJoinReport identifies issues that require alternative join strategies or query rewrites.
+* **Distribution-Parallelism:**
+        * Include the "Potential issues" section only if the distributionReport identifies operators with low parallelism that are negatively impacting the query's performance.
+        * Include the "Suggestions" section only if the distributionReport identifies issues that require increasing parallelism or exploring a different execution engine.
+* **Memory and I/O:**
+        * Include the "Potential issues" section only if the executionStats reveal high memory consumption or excessive I/O operations that are negatively impacting the query's performance.
+        * Include the "Suggestions" section only if the executionStats identify issues that require using materialized views or alternative aggregation methods.
+* Ideal Output format: 
+* **Pruning:**
+    * **Potential issues:**
+        * Identify tables that are not pruned with their cost percents in the pruningAndPartitioningReport and mention about all unpruned tables that are from query. 
+        * Always cosider information(if you can draw any) on partitioning report also which helps us to know underlying data's partitioning details for all the tables involved in the query.
+        * Always try to talk about tables along with reference to their respective operator ids to be more clarified to the user.
+        * For those unpruned tables with relatively larger cost percents(say greater than 15%), analyze the query text to identify frequently used filter conditions on that table.
+        * Based on the identified filters, analyze the following optimization strategies:
+                1. Adding indexes: If the filters frequently involve columns that are not currently indexed, consider adding indexes on these columns to improve pruning effectiveness.
+                2. Partitioning: If the filters frequently involve columns that are not currently used for partitioning, consider partitioning the table on these columns to further reduce the amount of data scanned.
+        * If the report identifies tables that are pruned and it is positively impacting the query's performance, do not mention it in the output.
+    * **Suggestions:**
+        * For those tables in Focusable Tables which indeed have high cost percents in the query execution stats and if they are also unpruned then provide specific recommendations for adding indexes or partitioning based on the identified filters on these tables from query text as they are having high cost percents.
+        * Identify the those columns for the Focusable tables from query text which are used in filters, and you follow below sub-instructions to point out the correct columns and suggest partitioning on them.
+                1. Look for columns in Focusable and unpruned Tables if they are filtered several times across the query text to suggest partitioning or indexing on them.
+                2. Look for Tables in Focusable and unpruned Tables that are being used several times across the query text to suggest for partitioning on it.
+        * If a table is already pruned and it is positively impacting the query's performance, do not mention it in the output.
+        * If further optimization is needed for a partitioned table, consider additional partitioning on columns that are frequently involved in the query's filters.
+* **Bad Joins:**
+    * **Potential issues:**
+        * If the `badJoinReport` identifies exploded joins, analyze their impact on performance and suggest alternative join strategies.
+        * If the report identifies bad join orders, analyze the reasons and suggest re-writing the query to improve join ordering.
+        * If the report identifies good join ordering and no exploded joins, do not mention it in the output.
+    * **Suggestions:**
+        * Recommend alternative join strategies, such as hash joins or nested loop joins, based on the identified issues.
+        * Suggest re-writing the query to improve join ordering, only if it is negatively impacting the query's performance.
+* **Distribution-Parallelism:**
+    * **Potential issues:**
+        * If the `distributionReport` identifies operators with low parallelism, analyze the impact of uneven row distribution on performance and suggest strategies for improvement.
+        * If an uneven distribution is found, always mentions rows at 50% and 90% also. 
+        * If the report identifies operators with good parallelism, do not mention it in the output.
+    * **Suggestions:**
+        * Recommend increasing parallelism for specific operators, only if it is negatively impacting the query's performance.
+        * Explore using a different execution engine that supports higher parallelism, if applicable.
+* **Memory and I/O:**
+    * **Potential issues:**
+        * If a particular Tablescan operator/s is having high cost then consider looking for memory and I/O related metrics and try to find if there is any catch in memory and IO related issues that are responsible for that operator's high cost. Only talk about potential problematic metrics you find i.e; do not unnecessarily talk about other metrics and strictly mention the values of metrics you show in response.
+                1. Memory related metrics : Max_memory, Query_max_memory
+                2. IO related metrics : ReadIOTime, skipped_row_groups, skipped_pages, Seek_io_time/count, read_io_bytes/count, Stream_close_time, Open_time_percent, fileReaderOpenTime, pageReadFromChunkDuration, Read_io_time_percent.
+        * If the `executionStats` reveal high memory consumption during specific phases, such as aggregation, analyze the reasons and suggest strategies for reduction.
+        * If the stats reveal excessive I/O operations due to large intermediate result sets, analyze the reasons and suggest alternative aggregation methods.
+        * If the stats reveal good memory and I/O usage, do not mention it in the output.
+    * **Suggestions:**
+        * Recommend using materialized views to reduce intermediate results, only if it is negatively impacting the query's performance.
+        * Explore alternative aggregation methods, such as pre-aggregation or sampling, only if it is negatively impacting the query's performance.
+
+**Additional Notes:**
+
+* Only show issues that are found out in the *potential issues* section for any kind of analysis do not give suggestions under that instead give suggestions under *Suggestions* section.
+* Always include relative numbers from reports regarding any kind of analysis. If it's Bad join or uneven distribution, always include numbers of relative row counts whereever necessary and if it's pruning and partitioning, always include columns name of highest focussable table from query text.
+* Include actual query text and schema metadata for more detailed analysis.
+* Focus on providing direct responses and actionable insights.
+* Avoid unnecessary technical jargon or explanations.
+* Consider using visuals (e.g., charts, graphs) to enhance clarity and impact.
+
+
+**User Questions:**
+
+* Respond to specific user inquiries based on the provided analysis and suggestions.
+* Tailor your response to the user's needs and preferences.
+
+* Actual User Query : {question}
+
+**Example User Question:**
+
+* What are the primary factors contributing to the slow performance of this query?
+
+**Example Response:**
+
+* Based on the analysis, potential factors contributing to slow performance include:
+    * Lack of pruning on table `customer`, leading to increased I/O and CPU time.
+    * Exploded join between tables `orders` and `products`, negatively impacting performance.
+    * Low parallelism in the `TableScanOperator` on table `products`, negatively impacting performance.
+    * High memory consumption during aggregation phase, negatively impacting performance.
+
+* To improve performance, consider the suggestions provided in the analysis sections above, including:
+    * Adding an index on column `age` in table `customer`.
+    * Investigating alternative join strategies for the join between `orders` and `products`.
+    * Increasing parallelism for the `TableScanOperator` on table `products`.
+    * Using materialized views to reduce intermediate results during aggregation.
+

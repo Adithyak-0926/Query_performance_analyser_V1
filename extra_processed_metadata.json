@@ -1,0 +1,194 @@
+[
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.web_page",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 3000,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.income_band",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 20,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.ship_mode",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 20,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.store",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 1002,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.reason",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 65,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.web_site",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 66,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.warehouse",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 20,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.catalog_page",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 30000,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.time_dim",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 86400,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.promotion",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 1500,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.household_demographics",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 7200,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.date_dim",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 73049,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.customer_demographics",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 1920800,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.item",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 300000,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.customer_address",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 6000000,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.call_center",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 42,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.customer",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 11580510,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.web_returns",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 71997522,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.store_returns",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 287999764,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.catalog_returns",
+      "isPartitioned": false,
+      "numPartitions": 1,
+      "rowCount": 143996756,
+      "partitionColumnStats": []
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.inventory",
+      "isPartitioned": true,
+      "numPartitions": 261,
+      "rowCount": 783000000,
+      "partitionColumnStats": [
+        {
+          "partitionColumnName": "inv_date_sk",
+          "minValue": "2450815",
+          "maxValue": "2452635"
+        }
+      ]
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.web_sales",
+      "isPartitioned": true,
+      "numPartitions": 1823,
+      "rowCount": 719820455,
+      "partitionColumnStats": [
+        {
+          "partitionColumnName": "ws_sold_date_sk",
+          "minValue": "2450816",
+          "maxValue": "2452642"
+        }
+      ]
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.store_sales",
+      "isPartitioned": true,
+      "numPartitions": 1823,
+      "rowCount": 2750387156,
+      "partitionColumnStats": [
+        {
+          "partitionColumnName": "ss_sold_date_sk",
+          "minValue": "2450816",
+          "maxValue": "2452642"
+        }
+      ]
+    },
+    {
+      "tableName": "demogluecatalog.tpcds_1000_delta.catalog_sales",
+      "isPartitioned": true,
+      "numPartitions": 1836,
+      "rowCount": 1432777090,
+      "partitionColumnStats": [
+        {
+          "partitionColumnName": "cs_sold_date_sk",
+          "minValue": "2450815",
+          "maxValue": "2452654"
+        }
+      ]
+    }
+  ]
