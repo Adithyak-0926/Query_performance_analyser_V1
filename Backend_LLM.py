@@ -89,7 +89,6 @@ class DataProcessor:
      # Extract metrics using the LLMChain
      with get_openai_callback() as ab:
         res = metric_extractor({'question': question, 'document': self.document})
-        print(res)
         metrics_output = res['text'].split('\n')  # Split the text into a list of metrics
         print(f"Total Tokens for extraction: {ab.total_tokens}")
         print(f"Prompt Tokens for extraction: {ab.prompt_tokens}")
@@ -220,15 +219,17 @@ class DataProcessor:
          with open("prompts/pruning_analysis_V1.txt","r") as f:
              JSON_Analyser_template = f.read()
          pruningAndPartitioningReport = self.get_pruningAndPartitioningReport(JSON_data,schema_n_metadata)
+         print(pruningAndPartitioningReport)
          new_prompt_template = PromptTemplate.from_template(template=JSON_Analyser_template)
-         QnA_teller = LLMChain(llm=self.GPT4,prompt= new_prompt_template,verbose= True,memory=memory)
+         QnA_teller = LLMChain(llm=self.GPT4,prompt= new_prompt_template,verbose= False,memory=memory)
          response = QnA_teller({'question': question, 'document': self.document, 'data': JSON_data, 'query_text' : self.query, 'pruningAndPartitioningReport' : pruningAndPartitioningReport})
      else: 
          with open("prompts/gemini_pro.txt","r") as f:
              JSON_Analyser_template = f.read()
          pruningAndPartitioningReport,distributionReport,badJoinReport = self.get_all_reports(JSON_data,schema_n_metadata)
+         print(pruningAndPartitioningReport + distributionReport + badJoinReport)
          new_prompt_template = PromptTemplate.from_template(template=JSON_Analyser_template)
-         QnA_teller = LLMChain(llm=self.GPT4,prompt= new_prompt_template,verbose= True,memory=memory)
+         QnA_teller = LLMChain(llm=self.GPT4,prompt= new_prompt_template,verbose= False,memory=memory)
          response = QnA_teller({'question': question, 'document': self.document, 'data': JSON_data, 'query_text' : self.query, 'pruningAndPartitioningReport' : pruningAndPartitioningReport, 'BadDistributionReport' : distributionReport, 'badJoinReport' : badJoinReport})
      return response
     
@@ -241,6 +242,7 @@ class DataProcessor:
         distribution_report_message = analyzer.generate_distribution_report_for_TS_operators()
         bad_join_report_message = analyzer.generate_bad_joins_report()
         return combined_report_of_Pruning_n_partitioning,distribution_report_message,bad_join_report_message
+    
     def get_pruningAndPartitioningReport(self,query_stats_data,schema_n_metadata):
         analyzer = Pruning_Partitioning_distribution_badJoin_Analyzer(query_stats_data,schema_n_metadata)
         analyzer.perform_pruning_analysis()
