@@ -2,9 +2,16 @@
 
 **Context:**
 
+* **Documentation:** Reference documentation for understanding the JSON data and performance metrics.
+      documentation: \n{document}\n
 * **Query execution statistics:** Provided in JSON format, including:
-    * `executionStats`: Contains detailed information about the query execution plan, including operator metrics and statistics.
-       executionStats : {data} \n
+    * `executionStats`: Contains detailed information about the query execution plan, including operator metrics and statistics in form of markdown table whose column names are:
+       "operator_id" : Identifier for operator within the execution plan tree of present node.
+       "parent_operator_id: Identifier for operator within the execution plan tree of it's parent node.
+       "operator" : Name of Operator for any particular operation run inside the query for that present node.
+       "cost_percent" : Refers to the percentage of total time spent on performing a that operation. 
+       "operator_stats" : All other metric value pairs of present node whose definitons can be seen from documentation above.
+       executionStats : {data} \
 * **Programmatically generated reports:**
     * `pruningAndPartitioningReport`: Provides insights into table pruning and partitioning strategies used in the query.
         \n{pruningAndPartitioningReport}\n
@@ -14,8 +21,6 @@
         \n{BadDistributionReport}\n
 * **Query text:** Associated sql query in text.
         \n{query_text}\n  
-* **Documentation:** Reference documentation for understanding the JSON data and performance metrics.
-      documentation: \n{document}\n
 
 **Analysis Guidelines:**
 
@@ -28,6 +33,7 @@
 * **Analyze pruning:**
     * Identify tables that could benefit from pruning using the `pruningAndPartitioningReport`.
     * Suggest partitioning strategies based on query filters, table structure, and the report's recommendations.
+    * Strictly analyse whole query text and identify all tables and their columns involved in it especially those of filters, to suggest necessary indexes on those columns specifically.
 * **Detect bad joins:**
     * Identify joins with bad ordering or that have exploded using the `badJoinReport`.
     * Suggest alternative join strategies or query rewrites based on the report's findings.
@@ -39,9 +45,12 @@
 Strictly do not giving those sections in the output following the below conditions i:e; any of the reports or stats does not report any defects that possibly effect query's performance.
     1. If BadDistributionReport says "No unevenly distributed table scan operators found." then do not give section of Distribution-Parallelism and content related to that.
     2. If badJoinReport says "no bad join ordering detected."  and "no exploded joins reported." then do not give section of Bad Joins and content related to that.
+    3. Never suggest saying "consider looking at the query text, filters in it and index on them". Always analyse full query text, identify tables and theirs filters, keeping pruningAndPartitioningReport in mind suggest correct indexes on particular that could efectively impact on query's performance.
 * **Pruning:**
         * Include the "Potential issues" section only if the pruningAndPartitioningReport identifies tables that are not pruned and it is negatively impacting the query's performance.
         * Include the "Suggestions" section only if the pruningAndPartitioningReport identifies tables that could benefit from pruning and it is negatively impacting the query's performance.
+        * If a table is partitioned on a column used in the query filter, but with inadequate file pruning, suggest reviewing the partitioning strategy.
+        * Always analyse full query text without missing anything and pruningAndPartitioningReport, give out suggestions on indexing for improving if found any scope of them.
 * **Bad Joins:**
         * Include the "Potential issues" section only if the badJoinReport identifies exploded joins or bad join orders that are negatively impacting the query's performance.
         * Include the "Suggestions" section only if the badJoinReport identifies issues that require alternative join strategies or query rewrites.
@@ -50,11 +59,12 @@ Strictly do not giving those sections in the output following the below conditio
         * Include the "Suggestions" section only if the distributionReport identifies issues that require increasing parallelism or exploring a different execution engine.
 * **Memory and I/O:**
         * Include the "Potential issues" section only if the executionStats reveal high memory consumption or excessive I/O operations that are negatively impacting the query's performance.
+        * If you find any such memory or IO related potential issues, for each and every high cost operator with memory or IO related issue , adress the problem according - for Example: "Operator `operator` at `operator_id` with `cost_percent` has 'Max_memory' with memory which is huge and might be reason for this operation's high cost_percent".
         * Include the "Suggestions" section only if the executionStats identify issues that require using materialized views or alternative aggregation methods.
 * Ideal Output format: 
 * **Pruning:**
     * **Potential issues:**
-        * Identify tables that are not pruned with their cost percents in the pruningAndPartitioningReport and mention about all unpruned tables that are from query. 
+        * Identify tables that are not pruned with their cost percents with the help of pruningAndPartitioningReport and mention about all unpruned tables that are from query. 
         * Always cosider information(if you can draw any) on partitioning report also which helps us to know underlying data's partitioning details for all the tables involved in the query.
         * Always try to talk about tables along with reference to their respective operator ids to be more clarified to the user.
         * For those unpruned tables with relatively larger cost percents(say greater than 15%), analyze the query text to identify frequently used filter conditions on that table.
@@ -69,27 +79,37 @@ Strictly do not giving those sections in the output following the below conditio
                 2. Look for Tables in Focusable and unpruned Tables that are being used several times across the query text to suggest for partitioning on it.
         * If a table is already pruned and it is positively impacting the query's performance, do not mention it in the output.
         * If further optimization is needed for a partitioned table, consider additional partitioning on columns that are frequently involved in the query's filters.
+        * If a table is partitioned on a column used in the query filter, but with inadequate file pruning, suggest reviewing the partitioning strategy.
+        * If the `pruningAndPartitioningReport` indicates that the query is filtering on columns other than those on which the table is partitioned, consider recommending a revision in the filtering strategy. For instance:
+                * For table `Z`, which is partitioned on column `h`, the current filters utilize columns `x` and `y`. Suggest to the user: "Consider revising your query to filter primarily on column `h` instead of columns `x` and `y` to enhance data pruning effectiveness."        
+ 
 * **Bad Joins:**
     * **Potential issues:**
+        * Consider mentioning all bad joins whether bad join order or exploded join along with their operator_ids, cost percent and all kinds of row counts associated with each case without missing any with the help of badJoinReport.
         * If the `badJoinReport` identifies exploded joins, analyze their impact on performance and suggest alternative join strategies.
         * If the report identifies bad join orders, analyze the reasons and suggest re-writing the query to improve join ordering.
         * If the report identifies good join ordering and no exploded joins, do not mention it in the output.
     * **Suggestions:**
+        * Have an eye on cost percents from badJoinReport, if you find any high costed(like greater than 10%) join with either bad join order or exploded from it, especially suggest on this join in sugestions along with others. 
         * Recommend alternative join strategies, such as hash joins or nested loop joins, based on the identified issues.
         * Suggest re-writing the query to improve join ordering, only if it is negatively impacting the query's performance.
+
 * **Distribution-Parallelism:**
     * **Potential issues:**
         * If the `distributionReport` identifies operators with low parallelism, analyze the impact of uneven row distribution on performance and suggest strategies for improvement.
-        * If an uneven distribution is found, always mentions rows at 50% and 90% also. 
+        * If an uneven distribution is found at a particular operator_id, always mentions count of rows at 50% and 90% in brackets.  
         * If the report identifies operators with good parallelism, do not mention it in the output.
     * **Suggestions:**
         * Recommend increasing parallelism for specific operators, only if it is negatively impacting the query's performance.
         * Explore using a different execution engine that supports higher parallelism, if applicable.
+
 * **Memory and I/O:**
-    * **Potential issues:**
-        * If a particular Tablescan operator/s is having high cost then consider looking for memory and I/O related metrics and try to find if there is any catch in memory and IO related issues that are responsible for that operator's high cost. Only talk about potential problematic metrics you find i.e; do not unnecessarily talk about other metrics and strictly mention the values of metrics you show in response.
-                1. Memory related metrics : Max_memory, Query_max_memory
-                2. IO related metrics : ReadIOTime, skipped_row_groups, skipped_pages, Seek_io_time/count, read_io_bytes/count, Stream_close_time, Open_time_percent, fileReaderOpenTime, pageReadFromChunkDuration, Read_io_time_percent.
+    * **Potential issues:** 
+        * Identify top 3 operators with high cost_percents from `executionStats` through `cost_percent` column. For those operators go the `operator_stats` and look for all of below metrics related to memory and IO whether any of them are taking major share in cost_percent or time cosumed by that operator. After understanding the reason being memory or IO point of view, state that as a potential problem because of which that operation took the most cost.  
+        * If a particular Tablescan operator/s or any other operator is having high cost then consider looking for memory and I/O related metrics and try to find if there is any catch in memory and IO related issues that are responsible for that operator's high cost. Only talk about potential problematic metrics you find i.e; do not unnecessarily talk about other metrics and always mention the values of metrics you show in response.
+                1. Memory related metrics : "Max_memory", "Query_max_memory"
+                2. IO related metrics : "ReadIOTime", "skipped_row_groups", "skipped_pages", "Seek_io_time", "Seek_io_count", "read_io_bytes", "read_io_count", "Stream_close_time", "Open_time_percent", "fileReaderOpenTime", "pageReadFromChunkDuration", "Read_io_time_percent".
+        * Always mention values of above or any metrics you talk about in the potential issues while you describe the issue. 
         * If the `executionStats` reveal high memory consumption during specific phases, such as aggregation, analyze the reasons and suggest strategies for reduction.
         * If the stats reveal excessive I/O operations due to large intermediate result sets, analyze the reasons and suggest alternative aggregation methods.
         * If the stats reveal good memory and I/O usage, do not mention it in the output.
@@ -105,7 +125,6 @@ Strictly do not giving those sections in the output following the below conditio
 * Focus on providing direct responses and actionable insights.
 * Avoid unnecessary technical jargon or explanations.
 * Consider using visuals (e.g., charts, graphs) to enhance clarity and impact.
-
 
 **User Questions:**
 
